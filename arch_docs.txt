@@ -1,0 +1,219 @@
+Number of bits: description
+
+GPU main
+========
+
+[f_oopcc1111ccbbuu2222ttttwwww]
+[87777666655554444333322221111]
+[18421842184218421842184218421]
+
+physical truthtable order:
+10, 00, 11, 01
+
+instruction truthtable order:
+00, 01, 10, 11
+
+4: write register
+4: op truthtable
+
+2: reg1 coreshift mode
+	0x = no coreshift
+	10 = coreshift left
+	11 = coreshift right
+2: reg1 bitshift mode
+	00 = no bitshift
+	01 = set random (nothing to do with bitshift)
+	10 = bitshift left
+	11 = bitshift right
+4: reg1 reg id
+
+2: reg2 regmode
+regmode = 0x (reg):
+	4: reg id
+regmode = 10 (uniform across-core):
+regmode = 11 (uniform in-core):
+	4: reg id
+
+2: colour channel (0 = no update)
+1: flush screen buffer
+
+total: 25
+
+GPU controller
+==============
+
+5: opcode
+1: update flags/graphics buffer
+
+opcode = 00000 to 00001 (generics):
+	same as CPU
+opcode = 00100 to 00110 (jmps):
+	same as CPU
+opcode = 01000 (or graphics buffer):
+opcode = 01001 (and graphics buffer):
+	4: write reg
+opcode = 01010 (read buffer in-core axis):
+opcode = 01011 (read buffer across-core axis):
+	4: write reg
+	18: immreg position
+opcode = 01100 to 01111 (bitwise ops):
+	same as CPU
+opcode = 10000 to 10101 (devices and interrupts):
+	same as CPU
+opcode = 11xxx (gpu):
+	1: update graphics buffer
+	25: command
+
+CPU
+===
+
+[f_ooooorrrrisiiiiiiiiiiiiiiii]
+[87777666655554444333322221111]
+[18421842184218421842184218421]
+
+immreg (18):
+	1: immediate or reg
+	imm:
+		1: sign
+		16: immediate
+	reg:
+		4: reg id
+
+ramimmreg (11):
+	1: immediate or reg
+	imm:
+		10: immediate
+	reg:
+		4: reg id
+
+Special registers:
+	1110: LP
+	1111: XP
+
+5: opcode
+
+opcode = MISC:
+	1: clear PC
+	1: suspend
+
+opcode = JMP:
+	1: update LP
+	1: mask interrupts
+	1: relative jmp
+	4: jmp condition
+	jmp condition:
+		0000: unconditional
+		0001: never
+		0100: is negative
+		0101: not negative
+		0110: is positive
+		0111: not positive
+		1000: carry
+		1001: not carry
+		1010: overflow
+		1011: not overflow
+		1100: is zero
+		1101: not zero
+	11: ramimmreg addr
+opcode = LOOP:
+	1: update LP
+	1: relative jmp
+	4: loop condition reg
+	1: custom step
+	4: step reg
+	12: ramimmreg addr
+
+opcode = BOOL:
+	4: write reg
+	4: condition (same as jmp condition)
+
+opcode = LOAD:
+	4: write reg
+	18: immreg addr
+opcode = STORE:
+	4: write val reg
+	18: immreg addr
+opcode = SEND:
+	4: addr reg
+	18: immreg write val
+
+opcode = LDR:
+	4: write reg
+	4: offset reg
+	1: use PC
+	11: ramimmreg base addr
+opcode = STR:
+	4: write val reg
+	4: offset reg
+	1: use PC
+	11: ramimmreg base addr
+
+opcode = PUSH:
+	4: SP reg
+	18: immreg push val
+opcode = POP:
+	4: SP reg
+	4: write reg
+opcode = CALL:
+	1: update LP
+	4: SP reg
+	11: ramimmreg addr
+opcode = RET:
+	1: update LP
+	4: SP reg
+
+opcode = MOV:
+opcode = ADD:
+opcode = SUB:
+opcdoe = ADDC:
+opcode = SUBB:
+opcode = SHL:
+opcode = SHR:
+opcode = SRA:
+opcode = LSB:
+opcode = AND:
+opcode = OR:
+opcode = MASK:
+opcode = XOR:
+	1: update flags
+	4: arg1/write reg
+	18: immreg arg2
+
+Memory Map
+==========
+0x000 - 0x3FF: Main RAM
+0x400 - 0xFFF: Reserved for external RAM
+0x1000 - 0x103F: Interrupt vector table
+0x1040 - 0x107F: Trigger interrupt (write-only)
+0x1080 - 0x1083: Interrupt mask register (4 * 16-bit)
+0x1084: Processor flags
+0x1085: IP (read-only)
+0x1080 - 0x108F: GPU uniforms (write-only)
+0x1090 - 0x109F: GPU graphics buffer in-core axis (read-only)
+0x10A0 - 0x10AF: GPU graphics buffer across-core axis (read-only)
+0x10B0 - 0x10BF: GPU graphics buffer ops (read-only)
+0x10C0: GPU controller inject
+0x1100: Text display (write-only)
+0x1101: Icon display (write-only)
+0x1102 - 0x1103: Touchscreen touch buffer
+0x1104: Keyboard buffer
+0x1120 - 0x113F: Reserved IO
+0x2000 - 0x3FFF: Reserved for hard disk
+
+Interrupts
+==========
+0x0 - 0xF: Processor interrupts
+0x10 - 0x1F: Software interrupts
+	0x10: Cross GPU/CPU interrupt
+0x20 - 0x3F: Device interrupts
+	0x20: Touchscreen interrupt
+	0x21: Keyboard interrupt
+
+Flags
+=====
+
+- Zero flag
+- Negative flag
+- Carry flag
+- Overflow flag
+- Interrupts masked flag

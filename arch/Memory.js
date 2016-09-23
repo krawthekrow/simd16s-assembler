@@ -1,0 +1,17 @@
+class Memory {
+};
+
+Memory.MAIN_RAM_BASE = 0x000;
+Memory.MAIN_RAM_SIZE = 1 << 10;
+Memory.EXTERNAL_RAM_BASE = 0x400;
+Memory.EXTERNAL_RAM_SIZE = 3 * (1 << 10);
+
+Memory.NUM_INTERRUPTS = 1 << 6;
+Memory.IVT_BASE = 0x1000;
+Memory.IVT_SIZE = Memory.NUM_INTERRUPTS;
+Memory.TRIGGER_INTERRUPT_BASE = 0x1040;
+Memory.TRIGGER_INTERRUPT_SIZE = Memory.NUM_INTERRUPTS;
+
+//...
+
+Memory.TEXT = 0x1100;
