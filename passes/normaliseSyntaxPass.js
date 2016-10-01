@@ -6,11 +6,13 @@ module.exports = (ast, errors) => {
 		gpu: (statement) => {
 			statement.colour = {
 				type: 'int',
+				format: 'dec',
 				val: 0,
 				loc: statement.loc
 			};
 			statement.flushScreenBuffer = false;
 			statement.updateGraphicsBuffer = false;
+			let nobufOverride = false;
 			for(extension of statement.extensions){
 				switch(extension.type){
 					case 'colour':
@@ -19,8 +21,11 @@ module.exports = (ast, errors) => {
 					case 'flush':
 						statement.flushScreenBuffer = true;
 					break;
-					case 'save':
+					case 'buf':
 						statement.updateGraphicsBuffer = true;
+					break;
+					case 'nobuf':
+						noBufOverride = true;
 					break;
 					default:
 						errors.push(CompileError.critical(
@@ -31,6 +36,9 @@ module.exports = (ast, errors) => {
 				}
 			}
 			delete statement.extensions;
+			if(statement.colour.val != 0 && !nobufOverride){
+				statement.updateGraphicsBuffer = true;
+			}
 			return statement;
 		}
 	});

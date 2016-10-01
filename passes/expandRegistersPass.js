@@ -117,7 +117,12 @@ module.exports = (ast, errors) => {
 			const needSwap = reg1MustBeReg2 || reg2MustBeReg1;
 			statement.reg1 = needSwap ? reg2 : reg1;
 			statement.reg2 = needSwap ? reg1 : reg2;
-			statement.truthTable.val ^= needSwap ? 6 : 0;
+			if(needSwap){
+				statement.truthTable.val =
+					((statement.truthTable.val & 0b0010) << 1) |
+					((statement.truthTable.val & 0b0100) >> 1) |
+					(statement.truthTable.val & 0b1001);
+			}
 			return statement;
 		}
 	});

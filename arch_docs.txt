@@ -181,24 +181,24 @@ opcode = XOR:
 
 Memory Map
 ==========
-0x000 - 0x3FF: Main RAM
-0x400 - 0xFFF: Reserved for external RAM
+0x000 - 0xFFF: Main RAM
 0x1000 - 0x103F: Interrupt vector table
 0x1040 - 0x107F: Trigger interrupt (write-only)
 0x1080 - 0x1083: Interrupt mask register (4 * 16-bit)
 0x1084: Processor flags
 0x1085: IP (read-only)
-0x1080 - 0x108F: GPU uniforms (write-only)
-0x1090 - 0x109F: GPU graphics buffer in-core axis (read-only)
-0x10A0 - 0x10AF: GPU graphics buffer across-core axis (read-only)
-0x10B0 - 0x10BF: GPU graphics buffer ops (read-only)
-0x10C0: GPU controller inject
-0x1100: Text display (write-only)
-0x1101: Icon display (write-only)
-0x1102 - 0x1103: Touchscreen touch buffer
-0x1104: Keyboard buffer
-0x1120 - 0x113F: Reserved IO
-0x2000 - 0x3FFF: Reserved for hard disk
+0x1200 - 0x13FF: GPU shader RAM
+0x1400 - 0x140F: GPU uniforms (write-only)
+0x1410 - 0x141F: GPU graphics buffer in-core axis (read-only)
+0x1420 - 0x141F: GPU graphics buffer across-core axis (read-only)
+0x1430 - 0x143F: GPU graphics buffer ops (read-only)
+0x1440: GPU controller inject
+0x1800 - 0x180F: Text display (write-only)
+0x1810 - 0x181F: Icon display (write-only)
+0x1820 - 0x182F: Touchscreen touch buffer
+0x1830 - 0x183F: Keyboard buffer
+0x1900 - 0x19FF: Reserved IO
+0x2000 - 0x3FFF: Reserved for hard drive
 
 Interrupts
 ==========

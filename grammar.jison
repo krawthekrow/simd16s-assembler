@@ -11,6 +11,8 @@ const getloc = (token) => {
 %options case-insensitive
 %%
 
+"//".*\n			/* single line comments */
+"/*"(.|\n)*"*/"	/* block comments */
 \s+				/* skip whitespace */
 
 "macro"			return 'MACRO';
@@ -25,7 +27,8 @@ const getloc = (token) => {
 "rand"			return 'RAND';
 "colour"|"color"			return 'COLOUR';
 "flush"			return 'FLUSH';
-"save"			return 'SAVE';
+"buf"			return 'BUF';
+"nobuf"			return 'NOBUF';
 
 "print"			return 'PRINT';
 "cleartext"		return 'CLEARTEXT';
@@ -173,10 +176,17 @@ gpu_statement_extension
 				loc: getloc(@1)
 			};
 		}
-	| SAVE
+	| BUF
 		{
 			$$ = {
-				type: 'save',
+				type: 'buf',
+				loc: getloc(@1)
+			};
+		}
+	| NOBUF
+		{
+			$$ = {
+				type: 'nobuf',
 				loc: getloc(@1)
 			};
 		}
