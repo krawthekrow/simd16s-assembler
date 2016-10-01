@@ -122,6 +122,14 @@ Utils.clone = (token) => {
 				loc: token.loc
 			};
 		break;
+		case 'gpuRegWithModifiers':
+			return {
+				type: 'gpuRegWithModifiers',
+				reg: Utils.clone(token.reg),
+				modifiers: Utils.clone(token.modifiers),
+				loc: token.loc
+			};
+		break;
 		case 'string':
 			return {
 				type: 'string',
@@ -131,6 +139,97 @@ Utils.clone = (token) => {
 		break;
 		default:
 			console.assert(false, 'Unrecognised token type -- ' + token.type);
+		break;
+	}
+};
+Utils.cloneStatement = (statement) => {
+	if(statement == null){
+		return null;
+	}
+	switch(statement.type){
+		case 'block':
+			return {
+				type: 'block',
+				statements: statement.statements.map((innerStatement) => {
+					return Utils.cloneStatement(innerStatement);
+				}),
+				loc: statement.loc
+			};
+		break;
+		case 'label':
+			return {
+				type: 'label',
+				name: statement.name,
+				loc: statement.loc
+			};
+		break;
+		case 'rep':
+			return {
+				type: 'rep',
+				repNum: Utils.clone(statement.repNum),
+				statement: Utils.cloneStatement(statement.statement),
+				loc: statement.loc
+			};
+		break;
+		case 'alias':
+			return {
+				type: 'alias',
+				from: Utils.clone(statement.from),
+				to: Utils.clone(statement.to),
+				loc: statement.loc
+			};
+		break;
+		case 'macro':
+			return {
+				type: 'macro',
+				name: Utils.clone(statement.name),
+				args: statement.args.map((arg) => {
+					return Utils.clone(arg);
+				}),
+				statement: Utils.cloneStatement(statement.statement),
+				loc: statement.loc
+			};
+		break;
+		case 'procCall':
+			return {
+				type: 'procCall',
+				name: Utils.clone(statement.name),
+				args: statement.args.map((arg) => {
+					return Utils.clone(arg);
+				}),
+				loc: statement.loc
+			};
+		break;
+		case 'gpu':
+			return {
+				type: 'gpu',
+				writeReg: Utils.clone(statement.writeReg),
+				reg1: Utils.clone(statement.reg1),
+				reg2: Utils.clone(statement.reg2),
+				truthTable: Utils.clone(statement.truthTable),
+				colour: Utils.clone(statement.colour),
+				flushScreenBuffer: statement.flushScreenBuffer,
+				updateGraphicsBuffer: statement.updateGraphicsBuffer,
+				loc: statement.loc
+			};
+		break;
+		case 'print':
+			return {
+				type: 'print',
+				reg: Utils.clone(statement.reg),
+				printString: Utils.clone(statement.printString),
+				loc: statement.loc
+			};
+		break;
+		case 'cleartext':
+			return {
+				type: 'cleartext',
+				reg: Utils.clone(statement.reg),
+				loc: statement.loc
+			};
+		break;
+		default:
+			console.assert(false, 'Unrecognised statement type -- ' + statement.type);
 		break;
 	}
 };
@@ -145,21 +244,27 @@ Utils.mapStatements = (statement, callbackDict, beginScope = doNothing, endScope
 	if(statement == null){
 		return null;
 	}
-	switch(statement.type){
+	const newStatement = (statement.type in callbackDict) ?
+		callbackDict[statement.type](statement) :
+		statement;
+	if(newStatement == null){
+		return null;
+	}
+	switch(newStatement.type){
 		case 'block':
 			beginScope();
-			for([i, innerStatement] of statement.statements.entries()){
-				statement.statements[i] = Utils.mapStatements(innerStatement, callbackDict, beginScope, endScope);
+			for([i, innerStatement] of newStatement.statements.entries()){
+				newStatement.statements[i] = Utils.mapStatements(innerStatement, callbackDict, beginScope, endScope);
 			}
 			endScope();
 		break;
 		case 'rep':
-			statement.statement = Utils.mapStatements(statement.statement, callbackDict, beginScope, endScope);
+			newStatement.statement = Utils.mapStatements(newStatement.statement, callbackDict, beginScope, endScope);
 		break;
+		case 'macro':
+			newStatement.statement = Utils.mapStatements(newStatement.statement, callbackDict, beginScope, endScope);
 	}
-	return (statement.type in callbackDict) ?
-		callbackDict[statement.type](statement) :
-		statement;
+	return newStatement
 }
 
 module.exports = Utils;

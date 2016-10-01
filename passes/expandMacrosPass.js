@@ -49,9 +49,8 @@ function normaliseGpuReg(reg){
 	} : reg;
 }
 
-module.exports = (ast, errors) => {
-	const aliasMap = new ScopedDict();
-	const macrosMap = new ScopedDict();
+function expandMacros(block, errors, aliasMap, macrosMap){
+	let uniqueLabelPrefix = 0;
 	function expandToken(token){
 		let res = token;
 		if(res.type == 'identifier'){
@@ -85,7 +84,7 @@ module.exports = (ast, errors) => {
 		}
 		return true;
 	}
-	Utils.mapStatements(ast, {
+	Utils.mapStatements(block, {
 		alias: (statement) => {
 			aliasMap.add(statement.from.val, statement.to);
 			return null;
@@ -93,6 +92,57 @@ module.exports = (ast, errors) => {
 		macro: (statement) => {
 			macrosMap.add(statement.name.val, statement);
 			return null;
+		},
+		procCall: (statement) => {
+			statement.name = expandToken(statement.name);
+			if(statement.name.type != 'identifier'){
+				errors.push(CompileError.error(
+					'Procedure call does not resolve to an identifier -- ' + Utils.tokenToString(statement.name),
+					statement.name.loc
+				));
+				return null;
+			}
+			if(!macrosMap.contains(statement.name.val)){
+				return statement;
+			}
+			const macro = macrosMap.get(statement.name.val);
+			if(statement.args.length != macro.args.length){
+				errors.push(CompileError.error(
+					'Incorrect number of arguments -- Expected ' + macro.args.length.toString() + ', got ' + statement.args.length.toString()
+				));
+				return null;
+			}
+			const newStatement = Utils.cloneStatement(macro.statement);
+			const macroAliases = [];
+			for(let i = 0; i < macro.args.length; i++){
+				macroAliases.push({
+					type: 'alias',
+					from: macro.args[i],
+					to: statement.args[i],
+					loc: statement.loc
+				});
+			}
+			Utils.mapStatements(newStatement, {
+				label: (innerStatement) => {
+					const newLabel = uniqueLabelPrefix.toString() + '$' + innerStatement.name.val;
+					macroAliases.push({
+						type: 'alias',
+						from: innerStatement.name.val,
+						to: newLabel,
+						loc: statement.loc
+					});
+					innerStatement.name.val = newLabel;
+					return innerStatement;
+				}
+			});
+			uniqueLabelPrefix++;
+			const newStatementWithAliases = {
+				type: 'block',
+				statements: macroAliases.concat([newStatement]),
+				loc: statement.loc
+			};
+			expandMacros(newStatementWithAliases, errors, aliasMap, macrosMap);
+			return newStatementWithAliases;
 		},
 		rep: (statement) => {
 			let valid = true;
@@ -140,4 +190,10 @@ module.exports = (ast, errors) => {
 		aliasMap.endScope();
 		macrosMap.endScope();
 	});
+};
+
+module.exports = (ast, errors) => {
+	const aliasMap = new ScopedDict();
+	const macrosMap = new ScopedDict();
+	expandMacros(ast, errors, aliasMap, macrosMap);
 };

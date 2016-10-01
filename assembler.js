@@ -19,7 +19,10 @@ const setRayBitPass = rootRequire('passes/setRayBitPass.js');
 const grammar = fs.readFileSync('grammar.jison', 'utf8');
 const parser = new jison.Parser(grammar);
 
-const code = fs.readFileSync('tests/gpuTest.asm', 'utf8');
+const inputFile = (process.argv.length < 3) ?
+	'tests/gpuTest.asm' :
+	process.argv[2];
+const code = fs.readFileSync(inputFile, 'utf8');
 
 const errors = [];
 

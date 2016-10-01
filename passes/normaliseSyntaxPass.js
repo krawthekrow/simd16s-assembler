@@ -1,8 +1,8 @@
 const Utils = rootRequire('utils/Utils.js');
 const CompileError = rootRequire('utils/CompileError.js');
 
-module.exports = (ast, errors) => {
-	Utils.mapStatements(ast, {
+function normaliseSyntax(block, errors){
+	Utils.mapStatements(block, {
 		gpu: (statement) => {
 			statement.colour = {
 				type: 'int',
@@ -42,4 +42,8 @@ module.exports = (ast, errors) => {
 			return statement;
 		}
 	});
+};
+
+module.exports = (ast, errors) => {
+	normaliseSyntax(ast, errors);
 };

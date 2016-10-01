@@ -3,7 +3,7 @@ Number of bits: description
 GPU main
 ========
 
-[f_oopcc1111ccbbuu2222ttttwwww]
+[fOoopcc1111ccbbuu2222ttttwwww]
 [87777666655554444333322221111]
 [18421842184218421842184218421]
 
@@ -42,7 +42,7 @@ total: 25
 GPU controller
 ==============
 
-5: opcode
+6: opcode (only 5 bits used)
 1: update flags/graphics buffer
 
 opcode = 00000 to 00001 (generics):
@@ -67,7 +67,7 @@ opcode = 11xxx (gpu):
 CPU
 ===
 
-[f_ooooorrrrisiiiiiiiiiiiiiiii]
+[fOooooorrrrisiiiiiiiiiiiiiiii]
 [87777666655554444333322221111]
 [18421842184218421842184218421]
 
@@ -90,7 +90,7 @@ Special registers:
 	1110: LP
 	1111: XP
 
-5: opcode
+6: opcode (only 5 bits used)
 
 opcode = MISC:
 	1: clear PC
@@ -98,7 +98,7 @@ opcode = MISC:
 
 opcode = JMP:
 	1: update LP
-	1: mask interrupts
+	1: mask interrupts (ignored if relative)
 	1: relative jmp
 	4: jmp condition
 	jmp condition:

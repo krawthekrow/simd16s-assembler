@@ -18,7 +18,8 @@ const getloc = (token) => {
 "macro"			return 'MACRO';
 "alias"			return 'ALIAS';
 "rep"			return 'REP';
-"pad"			return 'PAD';
+
+"jmp"			return 'JMP';
 
 "genflags"		return 'GENFLAGS';
 "savelp"		return 'SAVELP';
@@ -44,6 +45,9 @@ const getloc = (token) => {
 
 [_a-zA-Z0-9]+	return 'IDENTIFIER';
 
+","				return ',';
+"."				return '.';
+":"				return ':';
 "("				return '(';
 ")"				return ')';
 "{"				return '{';
@@ -90,6 +94,14 @@ statement
 				loc: getloc(@1)
 			};
 		}
+	| identifier ':'
+		{
+			$$ = {
+				type: 'label',
+				name: identifier,
+				loc: getloc(@1)
+			};
+		}
 	| REP constant_int statement
 		{
 			$$ = {
@@ -105,6 +117,25 @@ statement
 				type: 'alias',
 				from: $2,
 				to: $3,
+				loc: getloc(@1)
+			};
+		}
+	| MACRO identifier '(' comma_separated_identifiers ')' statement
+		{
+			$$ = {
+				type: 'macro',
+				name: $2,
+				args: $4,
+				statement: $6,
+				loc: getloc(@1)
+			};
+		}
+	| identifier '(' comma_separated_alias_to ')'
+		{
+			$$ = {
+				type: 'procCall',
+				name: $1,
+				args: $3,
 				loc: getloc(@1)
 			};
 		}
@@ -136,6 +167,28 @@ statement
 				reg: $2,
 				loc: getloc(@1)
 			};
+		}
+	;
+
+comma_separated_identifiers
+	: identifier
+		{
+			$$ = [$1];
+		}
+	| comma_separated_identifiers ',' identifier
+		{
+			$$ = $1.concat([$3]);
+		}
+	;
+
+comma_separated_alias_to
+	: alias_to
+		{
+			$$ = [$1];
+		}
+	| comma_separated_alias_to ',' alias_to
+		{
+			$$ = $1.concat([$3]);
 		}
 	;
 
@@ -232,6 +285,15 @@ identifier
 
 literal_gpu_reg_with_modifiers
 	: literal_gpu_reg '[' identifier ']'
+		{
+			$$ = {
+				type: 'gpuRegWithModifiers',
+				reg: $1,
+				modifiers: $3,
+				loc: getloc(@1)
+			};
+		}
+	| identifier '[' identifier ']'
 		{
 			$$ = {
 				type: 'gpuRegWithModifiers',
