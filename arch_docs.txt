@@ -67,6 +67,150 @@ opcode = 11xxx (gpu):
 CPU
 ===
 
+Special registers:
+	1110: SP
+	1111: XP
+
+ARITH:
+[ooooouffff21111122222222ddddd]
+Jcc:
+[ooooooffff___ir_jjjjjjjjjjjjj]
+JAL
+[ooooooddddd__irfjjjjjjjjjjjjj]
+BOOL
+[oooooocccc_____f________ddddd]
+LOOP
+[oooooossssscccccsjjjjjjjjjjjj]
+MEM
+[ooooooffffobbbbbboooooo_ddddd]
+MEML
+[ooooooffffwwwwwwwwwwwwwwddddd]
+MEMC
+[ooooooffffrwwwwwwwwwwwwwaaaaa]
+STACK
+[ooooooffffv_____vvvvv___ddddd]
+FUNC
+[ooooooffff______jjjjjjjjjjjjj]
+
+
+6: opcode
+
+opcode = MISC:
+	1: clear PC
+	1: suspend
+
+opcode = MOVH
+opcode = MOVL:
+	5: dest
+	1: clear other bits
+	1: clear bits to
+	16: val
+
+opcode = ARITH:
+opcode = ARITH_NOUPDATE: // don't update flags
+	4: func
+
+	func = ADD:
+	func = SUB:
+	func = ADDC:
+	func = SUBB:
+
+	func = SHL:
+	func = SHR:
+	func = SRA:
+	// same as SHL but with registers swapped. optional.
+	func = RSHL:
+
+	func = AND:
+	func = OR:
+	func = XOR
+	func = MASK:
+	
+	func = SET:
+	func = UNSET:
+	func = ISSET:
+	func = NOTSET: // whole block optional
+		5: dest
+		5: reg1 // with sign extension
+		9: immreg2 // with sign extension
+
+opcode = Jcc:
+	4: func
+	
+	func = JMP:
+	func = JZ:
+	func = JNZ:
+
+	func = JN:
+	func = JNN:
+	func = JP:
+	func = JNP:
+
+	func = JC:
+	func = JNC:
+	func = JO:
+	func = JNO:
+		1: mask interrupts
+		1: not relative to PC
+		13: immreg jump dest
+
+opcode = JAL/BOOL:
+	5: dest
+	1: func
+
+	func = JAL:
+		1: mask interrupts
+		1: not relative to PC
+		13: immreg jump dest
+	
+	func = BOOL: // optional
+		4: condition // same as Jcc func
+
+opcode = LOOP: // optional
+	5: condition reg
+	6: immreg step
+	12: imm jump dest (relative) // with sign extension
+
+opcode = MEM:
+opcode = MEM_NOUPDATE: // don't update flags
+	4: func
+
+	func = LOAD:
+	func = STORE:
+		5: dest/writeVal
+		6: immreg base
+		1: override base with PC // optional
+		6: immreg offset // optional
+	
+	func = LDL:
+	func = STL: // long addresses. optional.
+		5: dest/writeVal
+		14: imm addr
+	
+	func = STC:
+	func = STRC: // optional
+		5: addr
+		1: relative to PC or SP // for STRC
+		13: immreg writeVal // with sign extension
+
+opcode = STACK:
+opcode = STACK_NOUPDATE:
+	4: func
+
+	func = PUSH:
+		9: immreg val
+	
+	func = POP:
+		5: dest
+	
+	func = CALL:
+		13: immreg jump dest
+	
+	func = RET:
+		
+CPU (old)
+=========
+
 [fOooooorrrrisiiiiiiiiiiiiiiii]
 [87777666655554444333322221111]
 [18421842184218421842184218421]
@@ -217,3 +361,32 @@ Flags
 - Carry flag
 - Overflow flag
 - Interrupts masked flag
+
+Text Display Control Characters
+===============================
+
+Hardware control bits
+---------------------
+
+0: Print on line 1
+1: Print on line 2
+2: Backspace on line 1
+3: Backspace on line 2
+4: Clear line 1
+5: Clear line 2
+6: Push line 2 up
+
+ASCII (7-bit encoding)
+----------------------
+
+0x0 (Null): Do nothing
+0x1 (Start of heading): Set first line as current line
+0x2 (Start of text): Set second line as current line
+0x4 (End of transmission): Cut short 4-word decoding
+0x7 (Bell): Flash LED
+0x8 (Backspace): Clear one character from current line
+0xA (New line): If first line is current line, clear second line and set second line as current line; if second line is current line, clear first line and push second line up
+0xC (New page): Clear both lines and set first line as current line
+0xD (Carriage return): Delete current line
+0x11 - 0x14 (Device control) and beyond: Change font colour
+0x7F (Delete): Filled rectangle character
